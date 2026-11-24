@@ -1,0 +1,57 @@
+@startuml
+title 練習問題表示アクティビティ図
+
+start
+
+:学習者がPartを選択;
+:GET PracticeServletを送信;
+
+if (partTypeは指定されているか) then (いいえ)
+  :Part選択画面を表示;
+  stop
+else (はい)
+endif
+
+if (partTypeは有効な数値か) then (いいえ)
+  :エラーメッセージを設定;
+  :エラー画面を表示;
+  stop
+else (はい)
+endif
+
+if (Partは5～7か) then (いいえ)
+  :対象外Partエラーを設定;
+  :エラー画面を表示;
+  stop
+else (はい)
+endif
+
+:QuestionDaoから設問を取得;
+:最新learning_historyを参照;
+:最新回答が誤答の設問を優先;
+
+if (Partは5か) then (はい)
+  :standaloneQuestionsを準備;
+else (いいえ)
+
+  if (本文グループが存在するか) then (いいえ)
+    :本文グループなしエラー;
+    :エラー画面を表示;
+    stop
+  else (はい)
+  endif
+
+  :PassageQuestionGrouperを実行;
+
+  while (未処理の本文グループがあるか)
+    :groupIdからPassageGroupを取得;
+    :PassageGroupItemを順序順に取得;
+    :Questionを本文グループに関連付け;
+  endwhile
+endif
+
+:練習画面へforward;
+:問題・本文・回答フォームを表示;
+
+stop
+@enduml

@@ -1,0 +1,53 @@
+@startuml
+title 模試提出アクティビティ図
+
+start
+
+:学習者が回答して提出;
+note right
+タイマー満了時は
+ブラウザーのJavaScriptで自動送信
+end note
+
+:POST answer_{questionId}を受信;
+:HTTPセッションから模試問題を取得;
+:開始時刻を取得;
+
+if (セッションに模試情報があるか) then (いいえ)
+  :エラーまたは模試開始画面へ遷移;
+  stop
+else (はい)
+endif
+
+:提出時刻を取得;
+:経過時間を計算;
+
+if (経過時間が75分30秒を超えるか) then (はい)
+  :全問を未回答として処理;
+else (いいえ)
+  :各設問の回答を確認;
+
+  while (未採点の設問があるか)
+    if (回答があるか) then (はい)
+      if (回答と正答が一致するか) then (はい)
+        :正解数を加算;
+      else (いいえ)
+        :不正解数を加算;
+      endif
+    else (いいえ)
+      :未回答数を加算;
+    endif
+  endwhile
+endif
+
+:回答数、正解数、不正解数、未回答数を集計;
+:開始時刻と終了時刻を設定;
+
+:MockExamDaoへ模試結果を登録;
+:mockIdを取得;
+:セッションから進行中模試属性を削除;
+
+:MockExamResultsServletへリダイレクト;
+
+stop
+@enduml

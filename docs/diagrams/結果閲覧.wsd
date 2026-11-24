@@ -1,0 +1,31 @@
+@startuml
+title 結果閲覧アクティビティ図
+
+start
+
+:学習者が結果ページを開く;
+:GET PracticeResultsServletまたはMockExamResultsServletを受信;
+
+if (練習履歴か模試結果か) then (練習履歴)
+  :LearningHistoryDao.findRecent(100)を実行;
+  :直近最大100件の練習履歴を取得;
+else (模試結果)
+  :MockExamDao.findRecent(100)を実行;
+  :直近最大100件の模試結果を取得;
+endif
+
+if (historyIdまたはmockIdが指定されているか) then (はい)
+  if (指定IDは存在するか) then (はい)
+    :指定された詳細結果を取得;
+  else (いいえ)
+    :未登録メッセージを設定;
+  endif
+else (いいえ)
+endif
+
+:結果一覧と詳細を画面へ設定;
+:結果JSPへforward;
+:結果画面を表示;
+
+stop
+@enduml
