@@ -1,0 +1,34 @@
+@startuml
+title レベル0 DFD：TOEIC練習・模試システム
+
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  RoundCorner 10
+}
+
+actor "学習者" as Learner
+
+rectangle "TOEIC練習・模試システム" as System
+
+database "MySQLデータベース" as DB
+
+Learner --> System : パート選択
+Learner --> System : 練習回答
+Learner --> System : 模試開始要求
+Learner --> System : 模試回答
+Learner --> System : 結果閲覧要求
+Learner --> System : CSV出力要求
+
+System --> Learner : 練習問題・本文・選択肢
+System --> Learner : 採点結果・履歴
+System --> Learner : 模試画面・タイマー
+System --> Learner : 模試集計結果
+System --> Learner : 結果一覧・詳細
+System --> Learner : CSVファイル
+
+System --> DB : 設問・本文・履歴の検索
+System --> DB : 回答履歴の登録
+System --> DB : 模試結果の登録
+DB --> System : 設問・本文・履歴・模試結果
+@enduml

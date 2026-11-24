@@ -1,0 +1,74 @@
+@startuml
+title レベル1 DFD：TOEIC練習・模試システム
+
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  RoundCorner 10
+}
+
+actor "学習者" as Learner
+
+rectangle "1.0\n練習問題表示" as P1
+rectangle "2.0\n練習回答登録" as P2
+rectangle "3.0\n練習結果表示" as P3
+rectangle "4.0\n模試開始・問題表示" as P4
+rectangle "5.0\n模試回答採点・登録" as P5
+rectangle "6.0\n模試結果表示" as P6
+rectangle "7.0\nCSV出力" as P7
+
+database "D1 設問データ" as D1
+database "D2 本文グループ" as D2
+database "D3 練習履歴" as D3
+database "D4 模試結果" as D4
+database "HTTPセッション\n模試進行状態" as Session
+
+Learner --> P1 : パート種別
+P1 --> Learner : 練習問題画面
+
+P1 --> D1 : 設問検索要求
+D1 --> P1 : 設問一覧
+P1 --> D2 : 本文取得要求
+D2 --> P1 : 本文グループ・文書
+
+Learner --> P2 : 設問ID・Part・回答
+P2 --> D1 : 設問・正答取得要求
+D1 --> P2 : 設問・正答
+P2 --> D3 : 回答履歴登録
+D3 --> P2 : historyId
+P2 --> Learner : 結果画面へのリダイレクト
+
+Learner --> P3 : 結果一覧・詳細要求
+P3 --> D3 : 履歴取得要求
+D3 --> P3 : 詳細履歴・直近100件
+P3 --> Learner : 練習結果画面
+
+Learner --> P4 : 模試開始要求
+P4 --> D1 : ランダム設問取得要求
+D1 --> P4 : 合計100問
+P4 --> D2 : 本文取得要求
+D2 --> P4 : 本文グループ・文書
+P4 --> Session : 問題セット・開始時刻保存
+Session --> P4 : 保存済み問題・開始時刻
+P4 --> Learner : 模試画面・タイマー
+
+Learner --> P5 : 模試回答
+P5 --> Session : 問題・開始時刻取得
+Session --> P5 : 問題セット・開始時刻
+P5 --> D4 : 集計結果登録
+D4 --> P5 : mockId
+P5 --> Session : 進行中模試属性削除
+P5 --> Learner : 結果画面へのリダイレクト
+
+Learner --> P6 : 模試結果要求
+P6 --> D4 : 模試結果取得要求
+D4 --> P6 : 模試一覧・詳細
+P6 --> Learner : 模試結果画面
+
+Learner --> P7 : CSV出力要求\npractice / mock
+P7 --> D3 : 練習履歴全件取得
+D3 --> P7 : 練習履歴全件
+P7 --> D4 : 模試結果全件取得
+D4 --> P7 : 模試結果全件
+P7 --> Learner : UTF-8 BOM付きCSV
+@enduml
