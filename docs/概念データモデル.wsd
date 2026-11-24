@@ -1,0 +1,32 @@
+@startuml
+title 概念データモデル
+
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "設問\nQUESTION" as QUESTION {
+  設問を一意に識別する
+}
+
+entity "本文グループ\nPASSAGE_GROUP" as PASSAGE_GROUP {
+  Part 6/7の本文セット
+}
+
+entity "本文項目\nPASSAGE_GROUP_ITEM" as PASSAGE_GROUP_ITEM {
+  本文グループを構成する文書
+}
+
+entity "練習履歴\nLEARNING_HISTORY" as LEARNING_HISTORY {
+  練習設問への回答履歴
+}
+
+entity "模試結果\nMOCK_EXAM_RESULT" as MOCK_EXAM_RESULT {
+  模試の回答集計結果
+}
+
+PASSAGE_GROUP ||--o{ PASSAGE_GROUP_ITEM : 所属する
+PASSAGE_GROUP ||--o{ QUESTION : 設問を含む
+QUESTION ||--o{ LEARNING_HISTORY : 回答履歴を持つ
+@enduml
