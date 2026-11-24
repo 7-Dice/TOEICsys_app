@@ -1,0 +1,67 @@
+@startuml
+title 論理データモデル
+
+hide stereotypes
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "QUESTION" as QUESTION {
+  * question_id : 識別子 <<PK>>
+  --
+  group_id : 識別子 <<FK候補>>
+  sequence_no : 数値
+  part_type : 数値
+  question_text : 文字列
+  option_a : 文字列
+  option_b : 文字列
+  option_c : 文字列
+  option_d : 文字列
+  correct_answer : 文字列
+  explanation : 文字列
+}
+
+entity "PASSAGE_GROUP" as PASSAGE_GROUP {
+  * group_id : 識別子 <<PK>>
+  --
+  part_type : 数値
+  group_type : 文字列
+  title : 文字列
+}
+
+entity "PASSAGE_GROUP_ITEM" as PASSAGE_GROUP_ITEM {
+  * item_id : 識別子 <<PK>>
+  --
+  group_id : 識別子 <<FK>>
+  sequence_no : 数値
+  speaker : 文字列
+  text_body : 文字列
+}
+
+entity "LEARNING_HISTORY" as LEARNING_HISTORY {
+  * history_id : 識別子 <<PK>>
+  --
+  question_id : 識別子 <<FK候補>>
+  part_type : 数値
+  user_answer : 文字列
+  correct_answer : 文字列
+  correct : 真偽値
+  answered_at : 日時
+  explanation : 文字列
+}
+
+entity "MOCK_EXAM_RESULT" as MOCK_EXAM_RESULT {
+  * mock_id : 識別子 <<PK>>
+  --
+  start_time : 日時
+  end_time : 日時
+  total_questions : 数値
+  answered_count : 数値
+  correct_count : 数値
+  incorrect_count : 数値
+  unanswered_count : 数値
+}
+
+PASSAGE_GROUP ||--o{ PASSAGE_GROUP_ITEM : "group_id"
+PASSAGE_GROUP ||--o{ QUESTION : "group_id（論理関連）"
+QUESTION ||--o{ LEARNING_HISTORY : "question_id（論理関連）"
+@enduml
