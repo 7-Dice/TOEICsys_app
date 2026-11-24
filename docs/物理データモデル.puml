@@ -1,0 +1,78 @@
+@startuml
+title 物理データモデル（MySQL）
+
+hide stereotypes
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "passage_groups" as passage_groups {
+  * group_id : BIGINT UNSIGNED <<PK>>
+  --
+  part_type : TINYINT UNSIGNED
+  group_type : VARCHAR(20)
+  title : VARCHAR(255) <<NULL>>
+}
+
+entity "passage_group_items" as passage_group_items {
+  * item_id : BIGINT UNSIGNED <<PK, AI>>
+  --
+  group_id : BIGINT UNSIGNED <<FK候補>>
+  sequence_no : INT UNSIGNED
+  speaker : VARCHAR(100) <<NULL>>
+  text_body : TEXT
+  --
+  UK (group_id, sequence_no)
+  INDEX (group_id, sequence_no)
+}
+
+entity "questions" as questions {
+  * question_id : BIGINT UNSIGNED <<PK, AI>>
+  --
+  group_id : BIGINT UNSIGNED <<FK候補, NULL>>
+  sequence_no : INT UNSIGNED <<NULL>>
+  part_type : TINYINT UNSIGNED
+  question_text : TEXT
+  option_a : VARCHAR(255)
+  option_b : VARCHAR(255)
+  option_c : VARCHAR(255)
+  option_d : VARCHAR(255)
+  correct_answer : CHAR(1)
+  explanation : TEXT <<NULL>>
+  --
+  INDEX (part_type)
+  INDEX (group_id, sequence_no)
+}
+
+entity "learning_history" as learning_history {
+  * history_id : BIGINT UNSIGNED <<PK, AI>>
+  --
+  question_id : BIGINT UNSIGNED <<FK候補>>
+  part_type : TINYINT UNSIGNED <<NULL>>
+  user_answer : CHAR(1)
+  correct_answer : CHAR(1) <<NULL>>
+  correct : BOOLEAN
+  answered_at : TIMESTAMP
+  explanation : TEXT <<NULL>>
+  --
+  INDEX (question_id)
+  INDEX (answered_at DESC)
+}
+
+entity "mock_exam_results" as mock_exam_results {
+  * mock_id : BIGINT UNSIGNED <<PK, AI>>
+  --
+  start_time : TIMESTAMP
+  end_time : TIMESTAMP
+  total_questions : INT UNSIGNED
+  answered_count : INT UNSIGNED
+  correct_count : INT UNSIGNED
+  incorrect_count : INT UNSIGNED
+  unanswered_count : INT UNSIGNED
+  --
+  INDEX (end_time DESC)
+}
+
+passage_groups ||--o{ passage_group_items : "推奨FK: group_id"
+passage_groups ||--o{ questions : "論理FK候補: group_id"
+questions ||--o{ learning_history : "論理FK候補: question_id"
+@enduml
