@@ -1,0 +1,46 @@
+@startuml
+title 模試開始アクティビティ図
+
+start
+
+:学習者が模試開始ボタンを選択;
+:GET MockExamServletを送信;
+
+:HTTPセッションから模試状態を取得;
+
+if (進行中の模試があるか) then (はい)
+  :保存済み問題一覧を取得;
+  :保存済み開始時刻を取得;
+else (いいえ)
+  :QuestionDaoでランダム問題を抽出;
+
+  partition "Part別抽出" {
+    :Part 5を30問抽出;
+    :Part 6を16問抽出;
+    :Part 7 SINGLEを29問抽出;
+    :Part 7 DOUBLEを10問抽出;
+    :Part 7 TRIPLEを15問抽出;
+  }
+
+  :合計100問を作成;
+  :開始時刻を記録;
+  :問題一覧と開始時刻をセッションへ保存;
+endif
+
+:抽出済みまたは保存済み問題を確認;
+
+if (Part 6または7の設問があるか) then (はい)
+  :本文グループ化処理を実行;
+
+  while (未処理の本文グループがあるか)
+    :PassageGroupを取得;
+    :PassageGroupItemを取得;
+  endwhile
+endif
+
+:締切時刻を計算;
+:exam.jspへforward;
+:模試画面とタイマーを表示;
+
+stop
+@enduml

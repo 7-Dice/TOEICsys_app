@@ -1,0 +1,60 @@
+@startuml
+title 練習回答登録アクティビティ図
+
+start
+
+:学習者がA～Dを選択して送信;
+:POST questionId, partType, answerを受信;
+
+if (questionIdは有効な数値か) then (いいえ)
+  :HTTP 400を返す;
+  stop
+else (はい)
+endif
+
+if (partTypeは5～7か) then (いいえ)
+  :HTTP 400を返す;
+  stop
+else (はい)
+endif
+
+if (answerはA～Dか) then (いいえ)
+  :HTTP 400を返す;
+  stop
+else (はい)
+endif
+
+:answerを大文字に正規化;
+:QuestionDaoで設問を取得;
+
+if (設問が存在するか) then (いいえ)
+  :HTTP 400またはエラー画面を返す;
+  stop
+else (はい)
+endif
+
+if (設問のPartと送信Partは一致するか) then (いいえ)
+  :HTTP 400を返す;
+  stop
+else (はい)
+endif
+
+:送信回答と正答を比較;
+
+if (正解か) then (はい)
+  :correct = true;
+else (いいえ)
+  :correct = false;
+endif
+
+:LearningHistoryDaoへ履歴を登録;
+:historyIdを取得;
+
+:PracticeResultsServletへリダイレクト;
+:historyIdを指定して結果詳細を取得;
+:直近最大100件を取得;
+:result.jspへforward;
+:練習結果画面を表示;
+
+stop
+@enduml
