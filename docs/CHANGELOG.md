@@ -1,10 +1,10 @@
-CHANGELOG
+# CHANGELOG
 
-# 変更履歴
+## 変更履歴
 
-## Unreleased
+### Unreleased
 
-## Added
+### Added
 
 - 要求分析書を追加(Issue#1)
 - 要件定義書を追加(Issue#2)
