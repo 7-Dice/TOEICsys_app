@@ -12,150 +12,337 @@
 </head>
 <body>
 <main class="practice-page">
+
     <c:if test="${not empty errorMessage}">
-        <p class="error-message"><c:out value="${errorMessage}"/></p>
+        <p class="error-message">
+            <c:out value="${errorMessage}"/>
+        </p>
     </c:if>
 
     <c:choose>
-        <c:when test="${empty questionList}">
-            <h1>Practice Mode</h1>
-            <p>Select a part to practice.</p>
-            <form action="${pageContext.request.contextPath}/PracticeServlet"
-                  method="get"
-                  class="part-form">
-                <label class="part-option">
-                    <input type="radio" name="partType" value="5" checked>
-                    Part 5 - Incomplete Sentences
-                </label>
-                <label class="part-option">
-                    <input type="radio" name="partType" value="6">
-                    Part 6 - Text Completion
-                </label>
-                <label class="part-option">
-                    <input type="radio" name="partType" value="7">
-                    Part 7 - Reading Comprehension
-                </label>
-                <button class="start-button" type="submit">Start</button>
-            </form>
+        <%-- Part選択画面 --%>
+        <c:when test="${empty partType}">
+            <section class="practice-selection">
+                <h1>Practice Mode</h1>
+                <p>Select a part to practice.</p>
+
+                <form action="${pageContext.request.contextPath}/PracticeServlet"
+                      method="get"
+                      class="part-form">
+                    <label class="part-option">
+                        <input type="radio" name="partType" value="5" checked>
+                        Part 5 - Incomplete Sentences
+                    </label>
+
+                    <label class="part-option">
+                        <input type="radio" name="partType" value="6">
+                        Part 6 - Text Completion
+                    </label>
+
+                    <label class="part-option">
+                        <input type="radio" name="partType" value="7">
+                        Part 7 - Reading Comprehension
+                    </label>
+
+                    <button class="start-button" type="submit">
+                        Start
+                    </button>
+                </form>
+            </section>
         </c:when>
 
+        <%-- 練習画面 --%>
         <c:otherwise>
             <header class="page-header">
                 <h1>Practice - Part <c:out value="${partType}"/></h1>
-                <a href="${pageContext.request.contextPath}/PracticeResultsServlet">
-                    View practice results
-                </a>
-            </header>
 
-            <c:forEach items="${standaloneQuestions}" var="question"
-                       varStatus="questionStatus">
-                <article class="question-card"
-                         id="question-${question.questionId}">
-                    <h2>Question ${questionStatus.count}</h2>
-                    <p class="question-text">
-                        <c:out value="${question.questionText}"/>
-                    </p>
-                    <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
-                          method="post"
-                          class="answer-form">
-                        <input type="hidden" name="questionId"
-                               value="${question.questionId}">
-                        <input type="hidden" name="partType"
-                               value="${question.partType}">
-                        <label class="answer-option">
-                            <input type="radio" name="answer" value="A" required>
-                            <span>A.</span>
-                            <span><c:out value="${question.optionA}"/></span>
-                        </label>
-                        <label class="answer-option">
-                            <input type="radio" name="answer" value="B">
-                            <span>B.</span>
-                            <span><c:out value="${question.optionB}"/></span>
-                        </label>
-                        <label class="answer-option">
-                            <input type="radio" name="answer" value="C">
-                            <span>C.</span>
-                            <span><c:out value="${question.optionC}"/></span>
-                        </label>
-                        <label class="answer-option">
-                            <input type="radio" name="answer" value="D">
-                            <span>D.</span>
-                            <span><c:out value="${question.optionD}"/></span>
-                        </label>
-                        <button class="answer-button" type="submit">
-                            Submit answer
+                <nav class="practice-actions"
+                     aria-label="Practice actions">
+                    <a href="${pageContext.request.contextPath}/PracticeResultsServlet">
+                        View practice results
+                    </a>
+
+                    <form action="${pageContext.request.contextPath}/PracticeServlet"
+                          method="get"
+                          class="practice-reset-form">
+                        <input type="hidden"
+                               name="reset"
+                               value="true">
+                        <input type="hidden"
+                               name="partType"
+                               value="${partType}">
+                        <button class="reset-button" type="submit">
+                            練習をリセット
                         </button>
                     </form>
-                </article>
-            </c:forEach>
+                </nav>
+            </header>
 
-            <c:forEach items="${passageGroups}" var="group">
-                <section class="passage-card">
-                    <span class="passage-type-badge">
-                        <c:out value="${group.passage.groupType}"/> PASSAGE
-                        (<c:out value="${group.passage.itemCount}"/> documents)
-                    </span>
-                    <h2><c:out value="${group.passage.title}"/></h2>
+            <%-- 直前に回答した問題の結果 --%>
+            <c:if test="${not empty practiceFeedback}">
+                <c:choose>
+                    <c:when test="${practiceFeedback.correct}">
+                        <section class="answer-result result-correct"
+                                 aria-live="polite">
+                            <h2>正解</h2>
 
-                    <c:forEach items="${group.passage.items}" var="document">
-                        <article class="passage-item">
-                            <header class="document-header">
-                                <span class="document-number">
-                                    Document <c:out value="${document.sequence_no}"/>
-                                    of <c:out value="${group.passage.itemCount}"/>
+                            <p>
+                                あなたの回答：
+                                <strong>
+                                    <c:out value="${practiceFeedback.answer}"/>
+                                </strong>
+                            </p>
+
+                            <p>
+                                正答：
+                                <strong>
+                                    <c:out value="${practiceFeedback.correctAnswer}"/>
+                                </strong>
+                            </p>
+
+                            <p class="explanation">
+                                解説：
+                                <c:out value="${practiceFeedback.explanation}"/>
+                            </p>
+                        </section>
+                    </c:when>
+
+                    <c:otherwise>
+                        <section class="answer-result result-wrong"
+                                 aria-live="polite">
+                            <h2>不正解</h2>
+
+                            <p>
+                                あなたの回答：
+                                <strong>
+                                    <c:out value="${practiceFeedback.answer}"/>
+                                </strong>
+                            </p>
+
+                            <p>
+                                正答：
+                                <strong>
+                                    <c:out value="${practiceFeedback.correctAnswer}"/>
+                                </strong>
+                            </p>
+
+                            <p class="explanation">
+                                解説：
+                                <c:out value="${practiceFeedback.explanation}"/>
+                            </p>
+                        </section>
+                    </c:otherwise>
+                </c:choose>
+            </c:if>
+
+            <c:choose>
+                <%-- 今回のPartをすべて回答済み --%>
+                <c:when test="${practiceCompleted}">
+                    <section class="completion-message">
+                        <h2>このPartの問題はすべて回答済みです</h2>
+                        <p>
+                            練習結果は保存されています。
+                            「練習をリセット」を選ぶと、同じPartを最初から解き直せます。
+                        </p>
+                    </section>
+                </c:when>
+
+                <%-- Part 5など、本文グループに属さない問題 --%>
+                <c:when test="${not empty standaloneQuestions}">
+                    <c:forEach items="${standaloneQuestions}"
+                               var="question"
+                               varStatus="status">
+                        <article class="question-card"
+                                 id="question-${question.questionId}">
+                            <div class="question-header">
+                                <h2>Question</h2>
+                                <span class="part-badge">
+                                    Part <c:out value="${question.partType}"/>
                                 </span>
-                                <h3><c:out value="${document.speaker}"/></h3>
-                            </header>
-                            <pre class="passage-text"><c:out value="${document.textBody}"/></pre>
+                            </div>
+
+                            <p class="question-text">
+                                <c:out value="${question.questionText}"/>
+                            </p>
+
+                            <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
+                                  method="post"
+                                  class="answer-form">
+                                <input type="hidden"
+                                       name="questionId"
+                                       value="${question.questionId}">
+                                <input type="hidden"
+                                       name="partType"
+                                       value="${question.partType}">
+
+                                <label class="answer-option">
+                                    <input type="radio"
+                                           name="answer"
+                                           value="A"
+                                           required>
+                                    <span>A.</span>
+                                    <span><c:out value="${question.optionA}"/></span>
+                                </label>
+
+                                <label class="answer-option">
+                                    <input type="radio"
+                                           name="answer"
+                                           value="B">
+                                    <span>B.</span>
+                                    <span><c:out value="${question.optionB}"/></span>
+                                </label>
+
+                                <label class="answer-option">
+                                    <input type="radio"
+                                           name="answer"
+                                           value="C">
+                                    <span>C.</span>
+                                    <span><c:out value="${question.optionC}"/></span>
+                                </label>
+
+                                <label class="answer-option">
+                                    <input type="radio"
+                                           name="answer"
+                                           value="D">
+                                    <span>D.</span>
+                                    <span><c:out value="${question.optionD}"/></span>
+                                </label>
+
+                                <button class="answer-button" type="submit">
+                                    回答して次の問題へ
+                                </button>
+                            </form>
                         </article>
                     </c:forEach>
-                </section>
+                </c:when>
 
-                <c:forEach items="${group.questions}" var="question">
-                    <article class="question-card"
-                             id="question-${question.questionId}">
-                        <h2>Question <c:out value="${question.sequenceNo}"/></h2>
-                        <p class="question-text">
-                            <c:out value="${question.questionText}"/>
-                        </p>
-                        <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
-                              method="post"
-                              class="answer-form">
-                            <input type="hidden" name="questionId"
-                                   value="${question.questionId}">
-                            <input type="hidden" name="partType"
-                                   value="${question.partType}">
-                            <label class="answer-option">
-                                <input type="radio" name="answer" value="A" required>
-                                <span>A.</span>
-                                <span><c:out value="${question.optionA}"/></span>
-                            </label>
-                            <label class="answer-option">
-                                <input type="radio" name="answer" value="B">
-                                <span>B.</span>
-                                <span><c:out value="${question.optionB}"/></span>
-                            </label>
-                            <label class="answer-option">
-                                <input type="radio" name="answer" value="C">
-                                <span>C.</span>
-                                <span><c:out value="${question.optionC}"/></span>
-                            </label>
-                            <label class="answer-option">
-                                <input type="radio" name="answer" value="D">
-                                <span>D.</span>
-                                <span><c:out value="${question.optionD}"/></span>
-                            </label>
-                            <button class="answer-button" type="submit">
-                                Submit answer
-                            </button>
-                        </form>
-                    </article>
-                </c:forEach>
-            </c:forEach>
+                <%-- Part 6/7など、本文グループに属する問題 --%>
+                <c:when test="${not empty passageGroups}">
+                    <c:forEach items="${passageGroups}" var="group">
+                        <section class="passage-card">
+                            <span class="passage-type-badge">
+                                <c:out value="${group.passage.groupType}"/>
+                                PASSAGE
+                                (<c:out value="${group.passage.itemCount}"/>
+                                documents)
+                            </span>
+
+                            <h2>
+                                <c:out value="${group.passage.title}"/>
+                            </h2>
+
+                            <c:forEach items="${group.passage.items}"
+                                       var="document">
+                                <article class="passage-item">
+                                    <header class="document-header">
+                                        <span class="document-number">
+                                            Document
+                                            <c:out value="${document.sequence_no}"/>
+                                            of
+                                            <c:out value="${group.passage.itemCount}"/>
+                                        </span>
+
+                                        <c:if test="${not empty document.speaker}">
+                                            <h3>
+                                                <c:out value="${document.speaker}"/>
+                                            </h3>
+                                        </c:if>
+                                    </header>
+
+                                    <pre class="passage-text"><c:out value="${document.textBody}"/></pre>
+                                </article>
+                            </c:forEach>
+                        </section>
+
+                        <%-- 同じ本文グループでも現在の1問だけを表示 --%>
+                        <c:forEach items="${group.questions}"
+                                   var="question">
+                            <c:if test="${question.questionId == currentQuestion.questionId}">
+                                <article class="question-card"
+                                         id="question-${question.questionId}">
+                                    <div class="question-header">
+                                        <h2>
+                                            Question
+                                            <c:out value="${question.sequenceNo}"/>
+                                        </h2>
+                                        <span class="part-badge">
+                                            Part <c:out value="${question.partType}"/>
+                                        </span>
+                                    </div>
+
+                                    <p class="question-text">
+                                        <c:out value="${question.questionText}"/>
+                                    </p>
+
+                                    <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
+                                          method="post"
+                                          class="answer-form">
+                                        <input type="hidden"
+                                               name="questionId"
+                                               value="${question.questionId}">
+                                        <input type="hidden"
+                                               name="partType"
+                                               value="${question.partType}">
+
+                                        <label class="answer-option">
+                                            <input type="radio"
+                                                   name="answer"
+                                                   value="A"
+                                                   required>
+                                            <span>A.</span>
+                                            <span><c:out value="${question.optionA}"/></span>
+                                        </label>
+
+                                        <label class="answer-option">
+                                            <input type="radio"
+                                                   name="answer"
+                                                   value="B">
+                                            <span>B.</span>
+                                            <span><c:out value="${question.optionB}"/></span>
+                                        </label>
+
+                                        <label class="answer-option">
+                                            <input type="radio"
+                                                   name="answer"
+                                                   value="C">
+                                            <span>C.</span>
+                                            <span><c:out value="${question.optionC}"/></span>
+                                        </label>
+
+                                        <label class="answer-option">
+                                            <input type="radio"
+                                                   name="answer"
+                                                   value="D">
+                                            <span>D.</span>
+                                            <span><c:out value="${question.optionD}"/></span>
+                                        </label>
+
+                                        <button class="answer-button" type="submit">
+                                            回答して次の問題へ
+                                        </button>
+                                    </form>
+                                </article>
+                            </c:if>
+                        </c:forEach>
+                    </c:forEach>
+                </c:when>
+
+                <%-- 問題が取得できていない場合 --%>
+                <c:otherwise>
+                    <section class="completion-message">
+                        <h2>表示できる問題がありません</h2>
+                        <p>Part選択からやり直してください。</p>
+                        <a href="${pageContext.request.contextPath}/PracticeServlet">
+                            Part選択へ戻る
+                        </a>
+                    </section>
+                </c:otherwise>
+            </c:choose>
         </c:otherwise>
     </c:choose>
 
-    <a class="back-link" href="${pageContext.request.contextPath}/index.jsp">
+    <a class="back-link"
+       href="${pageContext.request.contextPath}/index.jsp">
         Back to mode selection
     </a>
 </main>
