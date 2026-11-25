@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,7 +55,9 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
         }
 
         String answer = request.getParameter("answer");
-        if (answer == null || !answer.matches("[A-Da-d]")) {
+
+        if (answer == null
+                || !answer.matches("[A-Da-d]")) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
                     "回答はA～Dから選択してください"
@@ -78,7 +81,9 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
             }
 
             boolean correct =
-                    answer.equalsIgnoreCase(question.getCorrectAnswer());
+                    answer.equalsIgnoreCase(
+                            question.getCorrectAnswer()
+                    );
 
             new LearningHistoryDao().insertHistory(
                     questionId,
@@ -88,26 +93,33 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
 
             HttpSession session = request.getSession();
 
-            synchronized (session) {
-                String answeredName =
-                        "practiceAnsweredIds_part_" + partType;
+            String answeredName =
+                    "practiceAnsweredIds_part_" + partType;
 
+            synchronized (session) {
                 Object value =
                         session.getAttribute(answeredName);
 
-                @SuppressWarnings("unchecked")
-                Set<Long> answeredIds =
-                        value instanceof Set<?>
-                                ? (Set<Long>) value
-                                : new HashSet<Long>();
+                Set<Long> answeredIds;
 
-                if (answeredIds.isEmpty()
-                        && !(value instanceof Set<?>)) {
-                    session.setAttribute(answeredName, answeredIds);
+                if (value instanceof Set<?> set) {
+                    answeredIds = new HashSet<>();
+
+                    for (Object item : set) {
+                        if (item instanceof Long id) {
+                            answeredIds.add(id);
+                        }
+                    }
+                } else {
+                    answeredIds = new HashSet<>();
                 }
 
                 answeredIds.add(questionId);
-                session.setAttribute(answeredName, answeredIds);
+
+                session.setAttribute(
+                        answeredName,
+                        answeredIds
+                );
 
                 session.setAttribute(
                         "practiceFeedback",
@@ -116,8 +128,7 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
                                 answer,
                                 correct,
                                 question.getCorrectAnswer(),
-                                question.getExplanation(),
-                                question.getQuestionText()
+                                question.getExplanation()
                         )
                 );
             }
@@ -136,7 +147,7 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
         }
     }
 
-    public static class PracticeFeedback implements java.io.Serializable {
+    public static class PracticeFeedback implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final long questionId;
@@ -144,22 +155,19 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
         private final boolean correct;
         private final String correctAnswer;
         private final String explanation;
-        private final String questionText;
 
         public PracticeFeedback(
                 long questionId,
                 String answer,
                 boolean correct,
                 String correctAnswer,
-                String explanation,
-                String questionText
+                String explanation
         ) {
             this.questionId = questionId;
             this.answer = answer;
             this.correct = correct;
             this.correctAnswer = correctAnswer;
             this.explanation = explanation;
-            this.questionText = questionText;
         }
 
         public long getQuestionId() {
@@ -180,10 +188,6 @@ public class PracticeResultRegistrationServlet extends HttpServlet {
 
         public String getExplanation() {
             return explanation;
-        }
-
-        public String getQuestionText() {
-            return questionText;
         }
     }
 }

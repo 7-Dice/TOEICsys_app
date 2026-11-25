@@ -14,13 +14,21 @@
 <main class="practice-page">
 
     <c:if test="${not empty errorMessage}">
-        <p class="error-message">
-            <c:out value="${errorMessage}"/>
-        </p>
+        <c:choose>
+            <c:when test="${practiceCompleted}">
+                <p class="completion-message">
+                    <c:out value="${errorMessage}"/>
+                </p>
+            </c:when>
+            <c:otherwise>
+                <p class="error-message">
+                    <c:out value="${errorMessage}"/>
+                </p>
+            </c:otherwise>
+        </c:choose>
     </c:if>
 
     <c:choose>
-        <%-- Part選択画面 --%>
         <c:when test="${empty partType}">
             <section class="practice-selection">
                 <h1>Practice Mode</h1>
@@ -30,28 +38,35 @@
                       method="get"
                       class="part-form">
                     <label class="part-option">
-                        <input type="radio" name="partType" value="5" checked>
+                        <input type="radio"
+                               name="partType"
+                               value="5"
+                               checked>
                         Part 5 - Incomplete Sentences
                     </label>
 
                     <label class="part-option">
-                        <input type="radio" name="partType" value="6">
+                        <input type="radio"
+                               name="partType"
+                               value="6">
                         Part 6 - Text Completion
                     </label>
 
                     <label class="part-option">
-                        <input type="radio" name="partType" value="7">
+                        <input type="radio"
+                               name="partType"
+                               value="7">
                         Part 7 - Reading Comprehension
                     </label>
 
-                    <button class="start-button" type="submit">
+                    <button class="start-button"
+                            type="submit">
                         Start
                     </button>
                 </form>
             </section>
         </c:when>
 
-        <%-- 練習画面 --%>
         <c:otherwise>
             <header class="page-header">
                 <h1>Practice - Part <c:out value="${partType}"/></h1>
@@ -71,93 +86,76 @@
                         <input type="hidden"
                                name="partType"
                                value="${partType}">
-                        <button class="reset-button" type="submit">
+                        <button class="reset-button"
+                                type="submit">
                             練習をリセット
                         </button>
                     </form>
                 </nav>
             </header>
 
-            <%-- 直前に回答した問題の結果 --%>
             <c:if test="${not empty practiceFeedback}">
-                <c:choose>
-                    <c:when test="${practiceFeedback.correct}">
-                        <section class="answer-result result-correct"
-                                 aria-live="polite">
-                            <h2>正解</h2>
+                <section class="answer-result
+                        ${practiceFeedback.correct
+                                ? 'result-correct'
+                                : 'result-wrong'}"
+                         aria-live="polite">
 
-                            <p>
-                                あなたの回答：
-                                <strong>
-                                    <c:out value="${practiceFeedback.answer}"/>
-                                </strong>
-                            </p>
+                    <h2>
+                        <c:choose>
+                            <c:when test="${practiceFeedback.correct}">
+                                正解
+                            </c:when>
+                            <c:otherwise>
+                                不正解
+                            </c:otherwise>
+                        </c:choose>
+                    </h2>
 
-                            <p>
-                                正答：
-                                <strong>
-                                    <c:out value="${practiceFeedback.correctAnswer}"/>
-                                </strong>
-                            </p>
+                    <p>
+                        あなたの回答：
+                        <strong>
+                            <c:out value="${practiceFeedback.answer}"/>
+                        </strong>
+                    </p>
 
-                            <p class="explanation">
-                                解説：
-                                <c:out value="${practiceFeedback.explanation}"/>
-                            </p>
-                        </section>
-                    </c:when>
+                    <p>
+                        正答：
+                        <strong>
+                            <c:out value="${practiceFeedback.correctAnswer}"/>
+                        </strong>
+                    </p>
 
-                    <c:otherwise>
-                        <section class="answer-result result-wrong"
-                                 aria-live="polite">
-                            <h2>不正解</h2>
-
-                            <p>
-                                あなたの回答：
-                                <strong>
-                                    <c:out value="${practiceFeedback.answer}"/>
-                                </strong>
-                            </p>
-
-                            <p>
-                                正答：
-                                <strong>
-                                    <c:out value="${practiceFeedback.correctAnswer}"/>
-                                </strong>
-                            </p>
-
-                            <p class="explanation">
-                                解説：
-                                <c:out value="${practiceFeedback.explanation}"/>
-                            </p>
-                        </section>
-                    </c:otherwise>
-                </c:choose>
+                    <p class="explanation">
+                        解説：
+                        <c:out value="${practiceFeedback.explanation}"/>
+                    </p>
+                </section>
             </c:if>
 
             <c:choose>
-                <%-- 今回のPartをすべて回答済み --%>
                 <c:when test="${practiceCompleted}">
                     <section class="completion-message">
                         <h2>このPartの問題はすべて回答済みです</h2>
                         <p>
                             練習結果は保存されています。
-                            「練習をリセット」を選ぶと、同じPartを最初から解き直せます。
+                            「練習をリセット」を選ぶと、
+                            同じPartを最初から解き直せます。
                         </p>
                     </section>
                 </c:when>
 
-                <%-- Part 5など、本文グループに属さない問題 --%>
                 <c:when test="${not empty standaloneQuestions}">
                     <c:forEach items="${standaloneQuestions}"
-                               var="question"
-                               varStatus="status">
+                               var="question">
                         <article class="question-card"
                                  id="question-${question.questionId}">
                             <div class="question-header">
                                 <h2>Question</h2>
+
                                 <span class="part-badge">
-                                    Part <c:out value="${question.partType}"/>
+                                    Part
+                                    <c:out value="${question.partType}"/>
                                 </span>
                             </div>
 
@@ -168,6 +166,7 @@
                             <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
                                   method="post"
                                   class="answer-form">
+
                                 <input type="hidden"
                                        name="questionId"
                                        value="${question.questionId}">
@@ -181,7 +180,9 @@
                                            value="A"
                                            required>
                                     <span>A.</span>
-                                    <span><c:out value="${question.optionA}"/></span>
+                                    <span>
+                                        <c:out value="${question.optionA}"/>
+                                    </span>
                                 </label>
 
                                 <label class="answer-option">
@@ -189,7 +190,9 @@
                                            name="answer"
                                            value="B">
                                     <span>B.</span>
-                                    <span><c:out value="${question.optionB}"/></span>
+                                    <span>
+                                        <c:out value="${question.optionB}"/>
+                                    </span>
                                 </label>
 
                                 <label class="answer-option">
@@ -197,7 +200,9 @@
                                            name="answer"
                                            value="C">
                                     <span>C.</span>
-                                    <span><c:out value="${question.optionC}"/></span>
+                                    <span>
+                                        <c:out value="${question.optionC}"/>
+                                    </span>
                                 </label>
 
                                 <label class="answer-option">
@@ -205,10 +210,13 @@
                                            name="answer"
                                            value="D">
                                     <span>D.</span>
-                                    <span><c:out value="${question.optionD}"/></span>
+                                    <span>
+                                        <c:out value="${question.optionD}"/>
+                                    </span>
                                 </label>
 
-                                <button class="answer-button" type="submit">
+                                <button class="answer-button"
+                                        type="submit">
                                     回答して次の問題へ
                                 </button>
                             </form>
@@ -216,15 +224,18 @@
                     </c:forEach>
                 </c:when>
 
-                <%-- Part 6/7など、本文グループに属する問題 --%>
                 <c:when test="${not empty passageGroups}">
-                    <c:forEach items="${passageGroups}" var="group">
+                    <c:forEach items="${passageGroups}"
+                               var="group">
+
                         <section class="passage-card">
                             <span class="passage-type-badge">
                                 <c:out value="${group.passage.groupType}"/>
                                 PASSAGE
-                                (<c:out value="${group.passage.itemCount}"/>
-                                documents)
+                                (
+                                <c:out value="${group.passage.itemCount}"/>
+                                documents
+                                )
                             </span>
 
                             <h2>
@@ -254,7 +265,6 @@
                             </c:forEach>
                         </section>
 
-                        <%-- 同じ本文グループでも現在の1問だけを表示 --%>
                         <c:forEach items="${group.questions}"
                                    var="question">
                             <c:if test="${question.questionId == currentQuestion.questionId}">
@@ -265,8 +275,10 @@
                                             Question
                                             <c:out value="${question.sequenceNo}"/>
                                         </h2>
+
                                         <span class="part-badge">
-                                            Part <c:out value="${question.partType}"/>
+                                            Part
+                                            <c:out value="${question.partType}"/>
                                         </span>
                                     </div>
 
@@ -277,6 +289,7 @@
                                     <form action="${pageContext.request.contextPath}/PracticeResultRegistrationServlet"
                                           method="post"
                                           class="answer-form">
+
                                         <input type="hidden"
                                                name="questionId"
                                                value="${question.questionId}">
@@ -290,7 +303,9 @@
                                                    value="A"
                                                    required>
                                             <span>A.</span>
-                                            <span><c:out value="${question.optionA}"/></span>
+                                            <span>
+                                                <c:out value="${question.optionA}"/>
+                                            </span>
                                         </label>
 
                                         <label class="answer-option">
@@ -298,7 +313,9 @@
                                                    name="answer"
                                                    value="B">
                                             <span>B.</span>
-                                            <span><c:out value="${question.optionB}"/></span>
+                                            <span>
+                                                <c:out value="${question.optionB}"/>
+                                            </span>
                                         </label>
 
                                         <label class="answer-option">
@@ -306,7 +323,9 @@
                                                    name="answer"
                                                    value="C">
                                             <span>C.</span>
-                                            <span><c:out value="${question.optionC}"/></span>
+                                            <span>
+                                                <c:out value="${question.optionC}"/>
+                                            </span>
                                         </label>
 
                                         <label class="answer-option">
@@ -314,10 +333,13 @@
                                                    name="answer"
                                                    value="D">
                                             <span>D.</span>
-                                            <span><c:out value="${question.optionD}"/></span>
+                                            <span>
+                                                <c:out value="${question.optionD}"/>
+                                            </span>
                                         </label>
 
-                                        <button class="answer-button" type="submit">
+                                        <button class="answer-button"
+                                                type="submit">
                                             回答して次の問題へ
                                         </button>
                                     </form>
@@ -327,11 +349,11 @@
                     </c:forEach>
                 </c:when>
 
-                <%-- 問題が取得できていない場合 --%>
                 <c:otherwise>
                     <section class="completion-message">
                         <h2>表示できる問題がありません</h2>
                         <p>Part選択からやり直してください。</p>
+
                         <a href="${pageContext.request.contextPath}/PracticeServlet">
                             Part選択へ戻る
                         </a>
