@@ -88,7 +88,7 @@
                                value="${partType}">
                         <button class="reset-button"
                                 type="submit">
-                            練習をリセット
+                            Reset answer
                         </button>
                     </form>
                 </nav>
