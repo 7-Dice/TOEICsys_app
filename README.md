@@ -1,2 +1,2 @@
-# TOEICsys_web
+# TOEICsys_app
 TOEIC learaning system for GUI
