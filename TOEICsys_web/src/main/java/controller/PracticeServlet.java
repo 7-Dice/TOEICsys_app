@@ -12,7 +12,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
+import beans.PassageGroup;
 import beans.PassageQuestionGroup;
 import beans.Question;
 import dao.PassageGroupDao;
@@ -29,29 +31,21 @@ public class PracticeServlet extends HttpServlet {
     ) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        String partParameter = request.getParameter("partType");
+        HttpSession session = request.getSession();
 
+        String partParameter =
+                request.getParameter("partType");
+
+        // Part未指定の場合は選択画面
         if (partParameter == null || partParameter.isBlank()) {
-            sessionFeedbackClean(request);
+            session.removeAttribute("practiceFeedback");
             request.getRequestDispatcher("/WEB-INF/practice.jsp")
                     .forward(request, response);
             return;
         }
-        
-        String reset = request.getParameter("reset");
-
-        if ("true".equals(reset)
-                && partParameter != null
-                && !partParameter.isBlank()) {
-            int resetPartType = Integer.parseInt(partParameter);
-
-            request.getSession().removeAttribute(
-                    "practiceAnsweredIds_part_" + resetPartType
-            );
-            request.getSession().removeAttribute("practiceFeedback");
-        }
 
         int partType;
+
         try {
             partType = Integer.parseInt(partParameter);
         } catch (NumberFormatException e) {
@@ -74,12 +68,21 @@ public class PracticeServlet extends HttpServlet {
             return;
         }
 
+        // 練習リセット
+        if ("true".equals(request.getParameter("reset"))) {
+            session.removeAttribute(
+                    "practiceAnsweredIds_part_" + partType
+            );
+            session.removeAttribute("practiceFeedback");
+        }
+
         try {
             List<Question> allQuestions =
                     new QuestionDao()
                             .getQuestionsForPractice(partType, true);
 
             if (allQuestions.isEmpty()) {
+                request.setAttribute("partType", partType);
                 request.setAttribute(
                         "errorMessage",
                         "問題データがありません"
@@ -90,78 +93,119 @@ public class PracticeServlet extends HttpServlet {
             }
 
             Set<Long> answeredIds =
-                    getAnsweredIds(request, partType);
+                    getAnsweredIds(session, partType);
 
-            List<Question> questions = new ArrayList<>();
+            List<Question> unansweredQuestions =
+                    new ArrayList<>();
 
             for (Question question : allQuestions) {
                 if (!answeredIds.contains(
                         question.getQuestionId()
                 )) {
-                    questions.add(question);
+                    unansweredQuestions.add(question);
                 }
             }
 
-            if (questions.isEmpty()) {
-                request.removeAttribute("practiceFeedback");
+            if (unansweredQuestions.isEmpty()) {
+                request.setAttribute("partType", partType);
+                request.setAttribute("practiceCompleted", true);
+
                 request.setAttribute(
                         "errorMessage",
                         "このPartの問題はすべて回答済みです。"
                                 + "「練習をリセット」すると最初から解き直せます。"
                 );
+
                 request.getRequestDispatcher("/WEB-INF/practice.jsp")
                         .forward(request, response);
                 return;
             }
 
-            Question currentQuestion = questions.get(0);
+            // 次に表示する問題を1問だけ選ぶ
+            Question currentQuestion =
+                    unansweredQuestions.get(0);
 
             request.setAttribute("partType", partType);
-            request.setAttribute("questionList", questions);
-            request.setAttribute("currentQuestion", currentQuestion);
-
             request.setAttribute(
-                    "standaloneQuestions",
-                    currentQuestion.getGroupId() == null
-                            ? List.of(currentQuestion)
-                            : List.of()
+                    "questionList",
+                    unansweredQuestions
+            );
+            request.setAttribute(
+                    "currentQuestion",
+                    currentQuestion
             );
 
+            // Part 5または本文グループなしの問題
             if (partType == 5
                     || currentQuestion.getGroupId() == null) {
-                request.setAttribute("passageGroups", List.of());
+                request.setAttribute(
+                        "standaloneQuestions",
+                        List.of(currentQuestion)
+                );
+                request.setAttribute(
+                        "passageGroups",
+                        List.of()
+                );
             } else {
-                List<Question> currentGroupQuestions =
+                // 現在の本文グループだけを取得
+                request.setAttribute(
+                        "standaloneQuestions",
+                        List.of()
+                );
+
+                PassageGroupDao passageGroupDao =
+                        new PassageGroupDao();
+
+                PassageGroup passage =
+                        passageGroupDao.getGroupById(
+                                currentQuestion.getGroupId()
+                        );
+
+                if (passage == null) {
+                    throw new SQLException(
+                            "本文グループが見つかりません: "
+                                    + currentQuestion.getGroupId()
+                    );
+                }
+
+                List<Question> groupQuestions =
                         new ArrayList<>();
 
-                for (Question question : questions) {
-                    if (currentQuestion.getGroupId().equals(
-                            question.getGroupId()
-                    )) {
-                        currentGroupQuestions.add(question);
+                for (Question question : unansweredQuestions) {
+                    Long groupId = question.getGroupId();
+
+                    if (groupId != null
+                            && groupId.equals(
+                                    currentQuestion.getGroupId()
+                            )) {
+                        groupQuestions.add(question);
                     }
                 }
 
-                PassageQuestionGroup group =
+                PassageQuestionGroup passageQuestionGroup =
                         new PassageQuestionGroup(
-                                new PassageGroupDao().getGroupById(
-                                        currentQuestion.getGroupId()
-                                ),
-                                currentGroupQuestions
+                                passage,
+                                groupQuestions
                         );
 
                 request.setAttribute(
                         "passageGroups",
-                        List.of(group)
+                        List.of(passageQuestionGroup)
                 );
             }
 
+            // 回答直後のフィードバックをリクエストへ渡す
             Object feedback =
-                    request.getSession().getAttribute(
-                            "practiceFeedback"
-                    );
+                    session.getAttribute("practiceFeedback");
+
             if (feedback != null) {
-                request.setAttribute("practiceFeedback", feedback);
+                request.setAttribute(
+                        "practiceFeedback",
+                        feedback
+                );
+
+                // 一度表示したらセッションから削除
+                session.removeAttribute("practiceFeedback");
             }
 
             request.getRequestDispatcher("/WEB-INF/practice.jsp")
@@ -176,30 +220,26 @@ public class PracticeServlet extends HttpServlet {
     }
 
     private Set<Long> getAnsweredIds(
-            HttpServletRequest request,
+            HttpSession session,
             int partType
     ) {
-        Object value = request.getSession().getAttribute(
-                "practiceAnsweredIds_part_" + partType
-        );
+        Object value =
+                session.getAttribute(
+                        "practiceAnsweredIds_part_" + partType
+                );
 
         if (value instanceof Set<?> set) {
-            Set<Long> result = new HashSet<>();
+            Set<Long> answeredIds = new HashSet<>();
 
             for (Object item : set) {
                 if (item instanceof Long id) {
-                    result.add(id);
+                    answeredIds.add(id);
                 }
             }
-            return result;
+
+            return answeredIds;
         }
 
         return new HashSet<>();
-    }
-
-    private void sessionFeedbackClean(
-            HttpServletRequest request
-    ) {
-        request.getSession().removeAttribute("practiceFeedback");
     }
 }

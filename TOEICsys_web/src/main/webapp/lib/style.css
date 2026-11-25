@@ -505,6 +505,86 @@ th {
     cursor: wait;
 }
 
+.practice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.practice-reset-form {
+    display: inline;
+    margin: 0;
+}
+
+.reset-button {
+    padding: 8px 14px;
+    border: 1px solid #1769aa;
+    border-radius: 8px;
+    background: #fff;
+    color: #1769aa;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.reset-button:hover {
+    background: #edf4fb;
+}
+
+.answer-result {
+    margin: 20px 0;
+    padding: 16px 18px;
+    border-radius: 8px;
+}
+
+.answer-result h2 {
+    margin: 0 0 8px;
+}
+
+.answer-result p {
+    margin: 6px 0;
+}
+
+.completion-message {
+    margin: 20px 0;
+    padding: 18px 20px;
+    border: 1px solid #d7dde3;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.completion-message h2 {
+    margin-top: 0;
+}
+
+@media (max-width: 600px) {
+    .page-header {
+        display: block;
+    }
+
+    .page-header h1 {
+        text-align: center;
+    }
+
+    .practice-actions {
+        justify-content: center;
+        margin-top: 12px;
+    }
+}
+
+.result-correct {
+    border: 1px solid #93c6a2;
+    background: #edf8ef;
+}
+
+.result-wrong {
+    border: 1px solid #d6a9a9;
+    background: #fff0f0;
+}
+
+
 @media (max-width: 600px) {
     .practice-page,
     .selection-page,
